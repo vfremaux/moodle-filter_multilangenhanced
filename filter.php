@@ -109,7 +109,7 @@ class filter_multilangenhanced extends moodle_text_filter {
 	
 	    } else {
 	        $search1 = '/(<lang\s+language="[a-zA-Z0-9_-]*"[^>]*?'.'>.*?<\/lang\s*>)/is';
-	    	$outbuffer = preg_replace_callback($search1, 'multilang_filter_lang_impl', $text);
+	    	$outbuffer = preg_replace_callback($search1, 'multilangenhanced_filter_lang_impl', $text);
 	    }
 	
 		return $outbuffer;            
@@ -120,7 +120,7 @@ class filter_multilangenhanced extends moodle_text_filter {
 * for old syntax (easier to discriminate)
 *
 */
-function multilang_filter_lang_impl($langblock) {
+function multilangenhanced_filter_lang_impl($langblock) {
     global $CFG;
     
     $mylang = current_language();
