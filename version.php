@@ -17,15 +17,20 @@
 /**
  * Version details
  *
- * @package    filter
- * @subpackage multilangenhanced
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     filter_multilangenhanced
+ * @category    filter
+ * @author      Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright   2008 onwards Valery Fremaux (http://www.mylearningfactory.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2012101000;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2012110900;        // Requires this Moodle version
+$plugin->requires  = 2014050800;        // Requires this Moodle version
 $plugin->component = 'filter_multilangenhanced'; // Full name of the plugin (used for diagnostics)
-$plugin->release = "2.4.0 (build 2012101000)";
+$plugin->release = "2.7.0 (build 2012101000)";
 $plugin->maturity = MATURITY_RC;
+
+// Non moodle attributes.
+$plugin->codeincrement = '2.7.0000';
