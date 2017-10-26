@@ -1,26 +1,24 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-defined('MOODLE_INTERNAL') || die;
-
-/**
- * @package    filter_multilangenhanced
- * @category   filter
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+///////////////////////////////////////////////////////////////////////////
+//                                                                       //
+// This program is part of Moodle - Modular Object-Oriented Dynamic      //
+// Learning Environment - http://moodle.org                              //
+//                                                                       //
+// Copyright (C) 2012  Valery Fremaux <valery.fremaux@gmail.com>         //
+//                                                                       //
+// This program is free software; you can redistribute it and/or modify  //
+// it under the terms of the GNU General Public License as published by  //
+// the Free Software Foundation; either version 2 of the License, or     //
+// (at your option) any later version.                                   //
+//                                                                       //
+// This program is distributed in the hope that it will be useful,       //
+// but WITHOUT ANY WARRANTY; without even the implied warranty of        //
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         //
+// GNU General Public License for more details:                          //
+//                                                                       //
+//          http://www.gnu.org/copyleft/gpl.html                         //
+//                                                                       //
+///////////////////////////////////////////////////////////////////////////
 
 // Given XML multilinguage text, return relevant text according to
 // current language:
@@ -92,7 +90,6 @@ class filter_multilangenhanced extends moodle_text_filter {
                 $outbuffer .= $matches[1];
                 $nesting = 1;
                 $blocklang = $matches[2];
-                $langmatch = in_array($blocklang, $mylangs);
                 $text = $matches[3];
                 $catchbuffer = '';
                 $innerloop = true;
@@ -100,7 +97,6 @@ class filter_multilangenhanced extends moodle_text_filter {
                     // Pos 1 : pre-tag text
                     // Pos 2 : tag (opening or closing span)
                     // Pos 3 : post tag remainder
-                    // echo "bloc $blocklang > $langmatch ";
                     // echo '<br>1: '.htmlentities($matches[1]);
                     // echo '<br>2: '.htmlentities($matches[2]);
                     // echo '<br>3: '.htmlentities($matches[3]);
@@ -108,32 +104,24 @@ class filter_multilangenhanced extends moodle_text_filter {
                     $text = $matches[3];
                     if (strstr($matches[2], '<span') !== false) {
                         // A new span opens, aggegate text and nest it deeper
-                        if ($langmatch) {
-                            $catchbuffer .= $matches[1].$matches[2];
-                        }
+                        $catchbuffer .= $matches[1].$matches[2];
                         $nesting++;
                     } else {
                         // A closing span is detected.
-                        if ($langmatch) {
-                            $catchbuffer .= $matches[1];
-                        }
+                        $catchbuffer .= $matches[1];
                         if ($nesting == 1) {
                             // we have all nestings this closing span closes the lang span
-                            if ($langmatch) {
+                            if (in_array($blocklang, $mylangs)) {
                                 $outbuffer .= $catchbuffer;
-                                $catchbuffer = ''; // clear catch buffer by security.
                             }
                             $innerloop = false;
                             // if not expected language, just go further
                         } else {
-                            if ($langmatch) {
-                                $catchbuffer .= $matches[2];
-                            }
+                            $catchbuffer .= $matches[2];
                         }
                         $nesting--;
                     }
                 }
-                $outbuffer .= $catchbuffer;
             }
             if (!empty($text)) $outbuffer .= $text;
         } else {
@@ -142,7 +130,7 @@ class filter_multilangenhanced extends moodle_text_filter {
         }
 
         // print(" original : ".htmlentities($input).'<br>');
-        // print(" filtered : ".htmlentities($outbuffer).'<br>');
+        // print(" fitlered : ".htmlentities($outbuffer).'<br>');
         return $outbuffer;
     }
 }
