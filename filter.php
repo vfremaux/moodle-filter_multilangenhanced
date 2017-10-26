@@ -41,7 +41,6 @@ class filter_multilangenhanced extends moodle_text_filter {
     function filter($text, array $options = array()) {
         global $CFG;
 
-
         $mylang = current_language();
 
         // Some way to force target language from an outside global.
@@ -110,37 +109,25 @@ class filter_multilangenhanced extends moodle_text_filter {
                     if (strstr($matches[2], '<span') !== false) {
                         // A new span opens, aggegate text and nest it deeper
                         if ($langmatch) {
-                            // echo "keeping ";
                             $catchbuffer .= $matches[1].$matches[2];
-                        } else {
-                            // echo "not keeping ";
                         }
                         $nesting++;
                     } else {
                         // A closing span is detected.
                         if ($langmatch) {
-                            // echo "keeping1 ";
                             $catchbuffer .= $matches[1];
-                        } else {
-                            // echo "not keeping1 ";
                         }
                         if ($nesting == 1) {
                             // we have all nestings this closing span closes the lang span
                             if ($langmatch) {
-                                // echo " keeping2 ";
                                 $outbuffer .= $catchbuffer;
                                 $catchbuffer = ''; // clear catch buffer by security.
-                            } else {
-                                // echo "not keeping2 ";
                             }
                             $innerloop = false;
                             // if not expected language, just go further
                         } else {
                             if ($langmatch) {
-                                // echo " keeping3";
                                 $catchbuffer .= $matches[2];
-                            } else {
-                                // echo "not keeping3 ";
                             }
                         }
                         $nesting--;
@@ -148,9 +135,7 @@ class filter_multilangenhanced extends moodle_text_filter {
                 }
                 $outbuffer .= $catchbuffer;
             }
-            if (!empty($text)) {
-                $outbuffer .= $text;
-            }
+            if (!empty($text)) $outbuffer .= $text;
         } else {
             $search1 = '/(<lang\s+language="[a-zA-Z0-9_-]*"[^>]*?'.'>.*?<\/lang\s*>)/is';
             $outbuffer = preg_replace_callback($search1, 'multilangenhanced_filter_lang_impl', $text);
