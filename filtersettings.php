@@ -24,5 +24,12 @@
 defined('MOODLE_INTERNAL') || die;
 
 // This will give same access to original multilang setting as we share it.
-$settings->add(new admin_setting_configcheckbox('filter_multilang_force_old', 'filter_multilang_force_old',
-                   get_string('multilangforceold', 'admin'), 0));
+$key = 'filter_multilang_force_old';
+$label = 'filter_multilang_force_old';
+$desc = get_string('multilangforceold', 'admin');
+$settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
+
+$key = 'filter_multilangenhanced/replaceglobals';
+$label = 'filter_multilangenhanced/replaceglobals';
+$desc = get_string('configreplaceglobals', 'filter_multilangenhanced');
+$settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));

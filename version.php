@@ -30,7 +30,7 @@ $plugin->version   = 2012101000;        // The current plugin version (Date: YYY
 $plugin->requires  = 2016051900;        // Requires this Moodle version.
 $plugin->component = 'filter_multilangenhanced'; // Full name of the plugin (used for diagnostics).
 $plugin->release = "3.1.0 (build 2012101000)";
-$plugin->maturity = MATURITY_RC;
+$plugin->maturity = MATURITY_STABLE;
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.1.0000';
+$plugin->codeincrement = '3.1.0001';

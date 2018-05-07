@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die;
+
 /**
  * Given XML multilinguage text, return relevant text according to
  * current language:
@@ -41,6 +43,7 @@ class filter_multilangenhanced extends moodle_text_filter {
     public function filter($text, array $options = array()) {
         global $CFG;
 
+        $config = get_config('filter_multilangenhanced');
         $mylang = current_language();
 
         // Some way to force target language from an outside global.
@@ -64,10 +67,10 @@ class filter_multilangenhanced extends moodle_text_filter {
 
         $mylangs = array($mylang, $parentlang);
 
-        /* <vf>
-         * This rewritting is stronger then original multilang filter, although probably 
+        /*
+         * This rewritting is stronger then original multilang filter, although probably
          * slower : It will handle nested spans in case some content has text colouring or other
-         * formatting attribute using spans. 
+         * formatting attribute using spans.
          * using this filter, any marked content will be processed either being alone language or not
          * this makes content handling simpler in case real multilanguage is used that will not provide
          * all language version everywhere.
@@ -77,6 +80,10 @@ class filter_multilangenhanced extends moodle_text_filter {
             return $text;
         }
 
+        if (!empty($config->replaceglobals)) {
+            $text = $this->replace_globals($text);
+        }
+
         $input = $text;
 
         // Reuse the original setting !
@@ -84,8 +91,8 @@ class filter_multilangenhanced extends moodle_text_filter {
 
             // New syntax.
             $outbuffer = '';
-            $searchstart = '/^(.*?)<span[^>]+lang="([a-zA-Z0-9_-]+)"[^>]*>(.*)$/si';
-            $searchforward = '/^(.*?)(<span[^>]*'.'>|<\/span[^>]*'.'>)(.*)$/si';
+            $searchstart = '/^(.*?)<(span|div)[^>]+lang="([a-zA-Z0-9_-]+)"[^>]*>(.*)$/si';
+            $searchforwardpattern = '/^(.*?)(<{$langtag}[^>]*'.'>|<\/{$langtag}[^>]*'.'>)(.*)$/si';
 
             /* Let describe seach forward automaton
              * status variable : $nesting :
@@ -97,23 +104,27 @@ class filter_multilangenhanced extends moodle_text_filter {
             while (preg_match($searchstart, $text, $matches)) {
                 $outbuffer .= $matches[1];
                 $nesting = 1;
-                $blocklang = $matches[2];
+                $langtag = $matches[2]; // Now we know the lang switch uses div or span.
+                $searchforward = str_replace('{$langtag}', $langtag, $searchforwardpattern);
+                $blocklang = $matches[3];
                 $langmatch = in_array($blocklang, $mylangs);
-                $text = $matches[3];
+                $text = $matches[4];
                 $catchbuffer = '';
                 $innerloop = true;
                 while ($innerloop && preg_match($searchforward, $text, $matches)) {
+                    $pretag = $matches[1];
+                    $tag = $matches[2];
                     $text = $matches[3];
-                    if (strstr($matches[2], '<span') !== false) {
-                        // A new span opens, aggegate text and nest it deeper.
+                    if (strstr($tag, '<'.$langtag) !== false) {
+                        // A new span or div opens, aggegate text and nest it deeper.
                         if ($langmatch) {
-                            $catchbuffer .= $matches[1].$matches[2];
+                            $catchbuffer .= $pretag.$tag;
                         }
                         $nesting++;
                     } else {
-                        // A closing span is detected.
+                        // A closing span is detected. (all other cases, but most expected is </span or /div.
                         if ($langmatch) {
-                            $catchbuffer .= $matches[1];
+                            $catchbuffer .= $pretag;
                         }
                         if ($nesting == 1) {
                             // We have all nestings this closing span closes the lang span.
@@ -124,8 +135,9 @@ class filter_multilangenhanced extends moodle_text_filter {
                             $innerloop = false;
                             // If not expected language, just go further.
                         } else {
+                            // This is any inner closing tag. Take it.
                             if ($langmatch) {
-                                $catchbuffer .= $matches[2];
+                                $catchbuffer .= $tag;
                             }
                         }
                         $nesting--;
@@ -143,6 +155,32 @@ class filter_multilangenhanced extends moodle_text_filter {
 
         return $outbuffer;
     }
+
+    protected function replace_globals($text) {
+        global $CFG, $COURSE, $SITE, $USER, $DB;
+
+        $text = str_replace('%CID%', $COURSE->id, $text);
+        $text = str_replace('%CIDNUMBER%', $COURSE->idnumber, $text);
+        $text = str_replace('%CSHORTNAME%', $COURSE->shortname, $text);
+        $text = str_replace('%CFULLNAME%', $COURSE->fullname, $text);
+        $text = str_replace('%UID%', @$USER->id, $text);
+        $text = str_replace('%UUSERNAME%', @$USER->username, $text);
+        $text = str_replace('%UFIRSTNAME%', @$USER->firstname, $text);
+        $text = str_replace('%ULASTNAME%', @$USER->lastname, $text);
+        $text = str_replace('%UIDNUMBER%', @$USER->idnumber, $text);
+        $text = str_replace('%SNAME%', $SITE->fullname, $text);
+        $text = str_replace('%SSHORTNAME%', $SITE->shortname, $text);
+        $text = str_replace('%WWWROOT%', $CFG->wwwroot, $text);
+
+        if ($groupid = groups_get_course_group($COURSE)) {
+            $group = $DB->get_record('groups', array('id' => $groupid));
+            $text = str_replace('%GID%', $group->id, $text);
+            $text = str_replace('%GNAME%', $group->name, $text);
+        }
+
+        return $text;
+    }
+
 }
 
 /**
