@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Given XML multilinguage text, return relevant text according to
  * current language:
@@ -211,13 +209,13 @@ function multilangenhanced_filter_lang_impl($langblock) {
     $searchtosplit = '/<lang\s+language="([a-zA-Z0-9_-]+)"[^>]*>(.*?)<\/lang\s*>/is';
 
     if (!preg_match_all($searchtosplit, $langblock[0], $rawlanglist)) {
-        //skip malformed blocks
+        // Skip malformed blocks.
         return $langblock[0];
     }
 
     $langlist = array();
     foreach ($rawlanglist[1] as $index => $lang) {
-        $lang = str_replace('-','_',strtolower($lang)); // Normalize languages.
+        $lang = str_replace('-', '_', strtolower($lang)); // Normalize languages.
         $langlist[$lang] = $rawlanglist[2][$index];
     }
 
