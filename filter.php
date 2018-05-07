@@ -17,36 +17,39 @@
 defined('MOODLE_INTERNAL') || die;
 
 /**
- * @package    filter_multilangenhanced
- * @category   filter
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Given XML multilinguage text, return relevant text according to
+ * current language:
+ *   - look for multilang blocks in the text.
+ *   - if there exists texts in the currently active language, print them.
+ *   - else, if there exists texts in the current parent language, print them.
+ *   - else, print the first language in the text.
+ * Please note that English texts are not used as default anymore!
+ *
+ * This version is based on original multilang filter by Gaetan Frenoy,
+ * rewritten by valery fremaux.
+ *
+ * Following new syntax is not compatible with old one:
+ *   <span lang="XX" class="multilang">one lang</span>
+ *
+ * @package     filter_multilangenhanced
+ * @author      Valery Fremaux <valery.fremaux@gmail.com>
+ * @category    filter
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-// Given XML multilinguage text, return relevant text according to
-// current language:
-//   - look for multilang blocks in the text.
-//   - if there exists texts in the currently active language, print them.
-//   - else, if there exists texts in the current parent language, print them.
-//   - else, print the first language in the text.
-// Please note that English texts are not used as default anymore!
-//
-// This version is based on original multilang filter by Gaetan Frenoy,
-// rewritten by valery fremaux.
-//
-// Following new syntax is not compatible with old one:
-//   <span lang="XX" class="multilang">one lang</span>
+defined('MOODLE_INTERNAL') || die;
 
 class filter_multilangenhanced extends moodle_text_filter {
 
-    function filter($text, array $options = array()) {
+    public function filter($text, array $options = array()) {
         global $CFG;
 
-
+        $config = get_config('filter_multilangenhanced');
         $mylang = current_language();
 
         // Some way to force target language from an outside global.
-        if (isset($CFG->multilangenhanced_target_language)){
-            $mylang = $CFG->multilangenhanced_target_language;
+        // This is NOT a true setting.
+        if (isset($CFG->filter_multilangenhanced_target_language)) {
+            $mylang = $CFG->filter_multilangenhanced_target_language;
         }
 
         static $parentcache;
@@ -54,6 +57,7 @@ class filter_multilangenhanced extends moodle_text_filter {
         if (!isset($parentcache)) {
             $parentcache = array();
         }
+
         if (!array_key_exists($mylang, $parentcache)) {
             $parentlang = get_string('parentlanguage', 'filter_multilangenhanced');
             $parentcache[$mylang] = $parentlang;
@@ -63,84 +67,77 @@ class filter_multilangenhanced extends moodle_text_filter {
 
         $mylangs = array($mylang, $parentlang);
 
-        // <vf>
-        // This rewritting is stronger then original multilang filter, although probably 
-        // slower : It will handle nested spans in case some content has text colouring or other
-        // formatting attribute using spans. 
-        // using this filter, any marked content will be processed either being alone language or not
-        // this makes content handling simpler in case real multilanguage is used that will not provide
-        // all language version everywhere.
-    
-        if (empty($text) or is_numeric($text)) {
+        /*
+         * This rewritting is stronger then original multilang filter, although probably
+         * slower : It will handle nested spans in case some content has text colouring or other
+         * formatting attribute using spans.
+         * using this filter, any marked content will be processed either being alone language or not
+         * this makes content handling simpler in case real multilanguage is used that will not provide
+         * all language version everywhere.
+         */
+
+        if (empty($text) || is_numeric($text)) {
             return $text;
+        }
+
+        if (!empty($config->replaceglobals)) {
+            $text = $this->replace_globals($text);
         }
 
         $input = $text;
 
+        // Reuse the original setting !
         if (empty($CFG->filter_multilang_force_old) and !empty($CFG->filter_multilang_converted)) {
-            // new syntax
-            $outbuffer = '';
-            $searchstart = '/^(.*?)<span[^>]+lang="([a-zA-Z0-9_-]+)"[^>]*>(.*)$/si';
-            $searchforward = '/^(.*?)(<span[^>]*'.'>|<\/span[^>]*'.'>)(.*)$/si';
 
-            // Let describe seach forward automaton
-            // status variable : $nesting : 
-            // 0 = not started
-            // 1 = found lang span
-            // 2 and upper = found non lang span (waiting for closing span)
+            // New syntax.
+            $outbuffer = '';
+            $searchstart = '/^(.*?)<(span|div)[^>]+lang="([a-zA-Z0-9_-]+)"[^>]*>(.*)$/si';
+            $searchforwardpattern = '/^(.*?)(<{$langtag}[^>]*'.'>|<\/{$langtag}[^>]*'.'>)(.*)$/si';
+
+            /* Let describe seach forward automaton
+             * status variable : $nesting :
+             * 0 = not started
+             * 1 = found lang span
+             * 2 and upper = found non lang span (waiting for closing span)
+             */
 
             while (preg_match($searchstart, $text, $matches)) {
                 $outbuffer .= $matches[1];
                 $nesting = 1;
-                $blocklang = $matches[2];
+                $langtag = $matches[2]; // Now we know the lang switch uses div or span.
+                $searchforward = str_replace('{$langtag}', $langtag, $searchforwardpattern);
+                $blocklang = $matches[3];
                 $langmatch = in_array($blocklang, $mylangs);
-                $text = $matches[3];
+                $text = $matches[4];
                 $catchbuffer = '';
                 $innerloop = true;
                 while ($innerloop && preg_match($searchforward, $text, $matches)) {
-                    // Pos 1 : pre-tag text
-                    // Pos 2 : tag (opening or closing span)
-                    // Pos 3 : post tag remainder
-                    // echo "bloc $blocklang > $langmatch ";
-                    // echo '<br>1: '.htmlentities($matches[1]);
-                    // echo '<br>2: '.htmlentities($matches[2]);
-                    // echo '<br>3: '.htmlentities($matches[3]);
-                    // echo '<br><br>';
+                    $pretag = $matches[1];
+                    $tag = $matches[2];
                     $text = $matches[3];
-                    if (strstr($matches[2], '<span') !== false) {
-                        // A new span opens, aggegate text and nest it deeper
+                    if (strstr($tag, '<'.$langtag) !== false) {
+                        // A new span or div opens, aggegate text and nest it deeper.
                         if ($langmatch) {
-                            // echo "keeping ";
-                            $catchbuffer .= $matches[1].$matches[2];
-                        } else {
-                            // echo "not keeping ";
+                            $catchbuffer .= $pretag.$tag;
                         }
                         $nesting++;
                     } else {
-                        // A closing span is detected.
+                        // A closing span is detected. (all other cases, but most expected is </span or /div.
                         if ($langmatch) {
-                            // echo "keeping1 ";
-                            $catchbuffer .= $matches[1];
-                        } else {
-                            // echo "not keeping1 ";
+                            $catchbuffer .= $pretag;
                         }
                         if ($nesting == 1) {
-                            // we have all nestings this closing span closes the lang span
+                            // We have all nestings this closing span closes the lang span.
                             if ($langmatch) {
-                                // echo " keeping2 ";
                                 $outbuffer .= $catchbuffer;
-                                $catchbuffer = ''; // clear catch buffer by security.
-                            } else {
-                                // echo "not keeping2 ";
+                                $catchbuffer = ''; // Clear catch buffer by security.
                             }
                             $innerloop = false;
-                            // if not expected language, just go further
+                            // If not expected language, just go further.
                         } else {
+                            // This is any inner closing tag. Take it.
                             if ($langmatch) {
-                                // echo " keeping3";
-                                $catchbuffer .= $matches[2];
-                            } else {
-                                // echo "not keeping3 ";
+                                $catchbuffer .= $tag;
                             }
                         }
                         $nesting--;
@@ -156,10 +153,34 @@ class filter_multilangenhanced extends moodle_text_filter {
             $outbuffer = preg_replace_callback($search1, 'multilangenhanced_filter_lang_impl', $text);
         }
 
-        // print(" original : ".htmlentities($input).'<br>');
-        // print(" filtered : ".htmlentities($outbuffer).'<br>');
         return $outbuffer;
     }
+
+    protected function replace_globals($text) {
+        global $CFG, $COURSE, $SITE, $USER, $DB;
+
+        $text = str_replace('%CID%', $COURSE->id, $text);
+        $text = str_replace('%CIDNUMBER%', $COURSE->idnumber, $text);
+        $text = str_replace('%CSHORTNAME%', $COURSE->shortname, $text);
+        $text = str_replace('%CFULLNAME%', $COURSE->fullname, $text);
+        $text = str_replace('%UID%', @$USER->id, $text);
+        $text = str_replace('%UUSERNAME%', @$USER->username, $text);
+        $text = str_replace('%UFIRSTNAME%', @$USER->firstname, $text);
+        $text = str_replace('%ULASTNAME%', @$USER->lastname, $text);
+        $text = str_replace('%UIDNUMBER%', @$USER->idnumber, $text);
+        $text = str_replace('%SNAME%', $SITE->fullname, $text);
+        $text = str_replace('%SSHORTNAME%', $SITE->shortname, $text);
+        $text = str_replace('%WWWROOT%', $CFG->wwwroot, $text);
+
+        if ($groupid = groups_get_course_group($COURSE)) {
+            $group = $DB->get_record('groups', array('id' => $groupid));
+            $text = str_replace('%GID%', $group->id, $text);
+            $text = str_replace('%GNAME%', $group->name, $text);
+        }
+
+        return $text;
+    }
+
 }
 
 /**
@@ -196,7 +217,7 @@ function multilangenhanced_filter_lang_impl($langblock) {
 
     $langlist = array();
     foreach ($rawlanglist[1] as $index => $lang) {
-        $lang = str_replace('-','_',strtolower($lang)); // normalize languages
+        $lang = str_replace('-','_',strtolower($lang)); // Normalize languages.
         $langlist[$lang] = $rawlanglist[2][$index];
     }
 
@@ -205,6 +226,6 @@ function multilangenhanced_filter_lang_impl($langblock) {
     } else if (array_key_exists($parentlang, $langlist)) {
         return $langlist[$parentlang];
     } else {
-        return ''; // we just process a single tag for more editing flexibility.
+        return ''; // We just process a single tag for more editing flexibility.
     }
 }
