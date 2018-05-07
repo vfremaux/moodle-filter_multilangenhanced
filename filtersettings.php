@@ -14,8 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * @package     filter_multilangenhanced
+ * @author      Valery Fremaux <valery.fremaux@gmail.com>
+ * @category    filter
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 defined('MOODLE_INTERNAL') || die;
 
-// this will give same access to original multilang setting as we share it
-$settings->add(new admin_setting_configcheckbox('filter_multilang_force_old', 'filter_multilang_force_old',
-                   get_string('multilangforceold', 'admin'), 0));
+// This will give same access to original multilang setting as we share it.
+$key = 'filter_multilang_force_old';
+$label = 'filter_multilang_force_old';
+$desc = get_string('multilangforceold', 'admin');
+$settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
+
+$key = 'filter_multilangenhanced/replaceglobals';
+$label = 'filter_multilangenhanced/replaceglobals';
+$desc = get_string('configreplaceglobals', 'filter_multilangenhanced');
+$settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
