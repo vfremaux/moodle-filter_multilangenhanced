@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+// Privacy.
+$string['privacy:metadata'] = "The Multilang enhanced filter does not store any data belonging to users";
+
 $string['filtername'] = 'Enhanced multilang';
 $string['multilangenchanced'] = 'Enhanced multilang';
 $string['parentlanguage'] = 'Parent language';
