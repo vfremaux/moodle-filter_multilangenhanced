@@ -172,8 +172,10 @@ class filter_multilangenhanced extends moodle_text_filter {
 
         if ($groupid = groups_get_course_group($COURSE)) {
             $group = $DB->get_record('groups', array('id' => $groupid));
-            $text = str_replace('%GID%', $group->id, $text);
-            $text = str_replace('%GNAME%', $group->name, $text);
+            if ($group) {
+                $text = str_replace('%GID%', $group->id, $text);
+                $text = str_replace('%GNAME%', $group->name, $text);
+            }
         }
 
         return $text;
@@ -200,7 +202,7 @@ function multilangenhanced_filter_lang_impl($langblock) {
         $parentcache = array();
     }
     if (!array_key_exists($mylang, $parentcache)) {
-        $parentlang = get_parent_language($mylang);
+        $parentlang = get_string('parentlanguage');
         $parentcache[$mylang] = $parentlang;
     } else {
         $parentlang = $parentcache[$mylang];

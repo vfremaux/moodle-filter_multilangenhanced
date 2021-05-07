@@ -18,4 +18,6 @@ $string['filtername'] = 'Contenus multilingue (amélioré)';
 $string['multilangenchanced'] = 'Contenus multilingue (amélioré)';
 $string['parentlanguage'] = 'Langue mère';
 $string['configreplaceglobals'] = 'Remplacer les variables contextuelles globales';
+$string['privacy:metadata'] = 'Le plugin Filtre Multilangue Amélioré ne stocke pas de données personnelles.';
+
 
