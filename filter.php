@@ -99,11 +99,6 @@ class filter_multilangenhanced extends moodle_text_filter {
              * 2 and upper = found non lang span (waiting for closing span)
              */
 
-            if (!is_string($text)) {
-                debugging("Input should be a string", TRACE_ERRORS);
-                print_object($string);
-            }
-
             while (preg_match($searchstart, $text, $matches)) {
                 $outbuffer .= $matches[1];
                 $nesting = 1;
