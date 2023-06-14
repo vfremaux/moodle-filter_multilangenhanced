@@ -26,10 +26,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2022112100;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2023061401;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2020061500;        // Requires this Moodle version.
 $plugin->component = 'filter_multilangenhanced'; // Full name of the plugin (used for diagnostics).
-$plugin->release = "3.9.0 (build 2022112100)";
+$plugin->release = "3.9.0 (build 2023061401)";
 $plugin->maturity = MATURITY_STABLE;
 $plugin->supported = [39,311];
 
