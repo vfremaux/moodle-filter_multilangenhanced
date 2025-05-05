@@ -165,11 +165,11 @@ class filter_multilangenhanced extends moodle_text_filter {
         $text = str_replace('%CIDNUMBER%', $COURSE->idnumber, $text);
         $text = str_replace('%CSHORTNAME%', $COURSE->shortname, $text);
         $text = str_replace('%CFULLNAME%', $COURSE->fullname, $text);
-        $text = str_replace('%UID%', @$USER->id, $text);
-        $text = str_replace('%UUSERNAME%', @$USER->username, $text);
-        $text = str_replace('%UFIRSTNAME%', @$USER->firstname, $text);
-        $text = str_replace('%ULASTNAME%', @$USER->lastname, $text);
-        $text = str_replace('%UIDNUMBER%', @$USER->idnumber, $text);
+        $text = str_replace('%UID%', $USER->id ?? 0, $text);
+        $text = str_replace('%UUSERNAME%', $USER->username ?? '', $text);
+        $text = str_replace('%UFIRSTNAME%', $USER->firstname ?? '', $text);
+        $text = str_replace('%ULASTNAME%', $USER->lastname ?? '', $text);
+        $text = str_replace('%UIDNUMBER%', $USER->idnumber ?? '', $text);
         $text = str_replace('%SNAME%', $SITE->fullname, $text);
         $text = str_replace('%SSHORTNAME%', $SITE->shortname, $text);
         $text = str_replace('%WWWROOT%', $CFG->wwwroot, $text);
