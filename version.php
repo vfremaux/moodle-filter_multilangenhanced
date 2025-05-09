@@ -31,7 +31,7 @@ $plugin->requires  = 2022112801;        // Requires this Moodle version.
 $plugin->component = 'filter_multilangenhanced'; // Full name of the plugin (used for diagnostics).
 $plugin->release = "4.5.0 (build 2025043000)";
 $plugin->maturity = MATURITY_STABLE;
-$plugin->supported = [403, 405];
+$plugin->supported = [405, 405];
 
 // Non moodle attributes.
 $plugin->codeincrement = '4.5.0001';
